@@ -2,53 +2,65 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Milis'i Doyur</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: 'Arial', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; touch-action: none; }
         
-        /* Yol Tasarımı */
+        /* Yol */
         #yol { 
-            position: absolute; bottom: 0; width: 100%; height: 150px; 
-            background: #555; border-top: 10px solid #444; 
+            position: absolute; bottom: 0; width: 100%; height: 25%; 
+            background: #555; border-top: 5px solid #444; 
         }
 
-        /* Milis Karakteri */
+        /* Milis */
         #milis { 
-            position: absolute; bottom: 60px; left: 50px; 
-            font-size: 60px; transition: transform 0.1s linear; 
+            position: absolute; bottom: 15%; left: 50%; 
+            font-size: 80px; transform: translateX(-50%);
+            transition: left 0.2s ease-out, transform 0.2s;
             z-index: 100;
         }
 
-        /* Bored (Yiyecekler) */
+        /* Bored */
         .bored { 
-            position: absolute; font-size: 40px; 
-            bottom: 70px; z-index: 50;
+            position: absolute; font-size: 50px; 
+            bottom: 18%; z-index: 50;
         }
 
-        /* Arayüz */
+        /* Göstergeler */
         #skor { 
-            position: fixed; top: 20px; left: 20px; 
-            background: rgba(255,255,255,0.8); padding: 10px;
-            border-radius: 10px; font-size: 24px; font-weight: bold; 
+            position: fixed; top: 10px; left: 10px; 
+            background: white; padding: 8px; border-radius: 8px;
+            font-size: 20px; font-weight: bold; z-index: 200;
         }
 
         #mesaj { 
-            position: fixed; top: 40%; left: 50%; 
+            position: fixed; top: 30%; left: 50%; width: 80%;
             transform: translate(-50%, -50%);
-            background: white; padding: 20px; border-radius: 20px;
-            font-size: 35px; font-weight: bold; color: #d32f2f;
-            display: none; text-align: center; border: 5px solid #d32f2f;
+            background: white; padding: 20px; border-radius: 15px;
+            font-size: 25px; font-weight: bold; color: #d32f2f;
+            display: none; text-align: center; border: 4px solid #d32f2f;
             z-index: 1000;
         }
+
+        /* Mobil Kontrol Alanları */
+        .kontrol {
+            position: fixed; top: 0; width: 50%; height: 100%; z-index: 150;
+        }
+        #sol { left: 0; }
+        #sag { right: 0; }
     </style>
 </head>
 <body>
 
-    <div id="skor">Toplanan Bored: 0 / 20</div>
+    <div id="skor">Bored: 0 / 20</div>
     <div id="mesaj">Aferin milisi iyice doyurdun şişti!</div>
     <div id="yol"></div>
-
     <div id="milis">🐱</div>
+
+    <!-- Dokunmatik Alanlar -->
+    <div id="sol" class="kontrol"></div>
+    <div id="sag" class="kontrol"></div>
 
     <script>
         const milis = document.getElementById('milis');
@@ -56,24 +68,31 @@
         const mesaj = document.getElementById('mesaj');
 
         let toplanan = 0;
-        let milisX = 50;
+        let milisX = window.innerWidth / 2;
         let bittiMi = false;
 
-        // Hareket: Sağ ve Sol ok tuşları
-        window.addEventListener('keydown', (e) => {
+        // Hareket Fonksiyonu
+        function hareketEt(yon) {
             if(bittiMi) return;
-            if (e.key === "ArrowRight") milisX += 30;
-            if (e.key === "ArrowLeft") milisX -= 30;
-            
-            // Ekran sınırlarını koru
-            if(milisX < 0) milisX = 0;
-            if(milisX > window.innerWidth - 60) milisX = window.innerWidth - 60;
-            
+            if(yon === 'sol') milisX -= 40;
+            if(yon === 'sag') milisX += 40;
+
+            // Sınırlar
+            if(milisX < 40) milisX = 40;
+            if(milisX > window.innerWidth - 40) milisX = window.innerWidth - 40;
+
             milis.style.left = milisX + "px";
             kontrolEt();
-        });
+        }
 
-        // Rastgele Bored (Yiyecek) oluşturma
+        // Dokunmatik Kontroller
+        document.getElementById('sol').addEventListener('touchstart', (e) => { e.preventDefault(); hareketEt('sol'); });
+        document.getElementById('sag').addEventListener('touchstart', (e) => { e.preventDefault(); hareketEt('sag'); });
+        
+        // Bilgisayar için de tıklama desteği
+        document.getElementById('sol').addEventListener('mousedown', () => hareketEt('sol'));
+        document.getElementById('sag').addEventListener('mousedown', () => hareketEt('sag'));
+
         function boredOlustur() {
             if(bittiMi) return;
             const bored = document.createElement('div');
@@ -81,27 +100,22 @@
             bored.innerText = '🍔';
             bored.style.left = (Math.random() * (window.innerWidth - 60)) + "px";
             document.body.appendChild(bored);
-            
-            // 4 saniye sonra toplanmazsa silinsin
-            setTimeout(() => { if(bored.parentNode) bored.remove(); }, 4000);
+            setTimeout(() => { if(bored.parentNode) bored.remove(); }, 3000);
         }
 
-        // Dokunma/Çarpışma kontrolü
         function kontrolEt() {
             const boredlar = document.querySelectorAll('.bored');
             boredlar.forEach(b => {
                 const bRect = b.getBoundingClientRect();
                 const mRect = milis.getBoundingClientRect();
 
-                // Basit çarpışma testi
                 if (!(bRect.right < mRect.left || bRect.left > mRect.right)) {
                     b.remove();
                     toplanan++;
-                    skorYazisi.innerText = `Toplanan Bored: ${toplanan} / 20`;
+                    skorYazisi.innerText = `Bored: ${toplanan} / 20`;
                     
-                    // Milis büyüsün (şişsin)
-                    let olcek = 1 + (toplanan * 0.15);
-                    milis.style.transform = `scale(${olcek})`;
+                    let olcek = 1 + (toplanan * 0.1);
+                    milis.style.transform = `translateX(-50%) scale(${olcek})`;
 
                     if (toplanan >= 20) {
                         bittiMi = true;
@@ -111,8 +125,7 @@
             });
         }
 
-        // Her 1.2 saniyede bir yeni yiyecek gelsin
-        setInterval(boredOlustur, 1200);
+        setInterval(boredOlustur, 1000);
     </script>
 </body>
 </html>
