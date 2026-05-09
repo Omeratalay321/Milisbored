@@ -4,30 +4,41 @@
     <meta charset="UTF-8">
     <title>Milis'i Doyur</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #f7f7f7; font-family: sans-serif; }
-        #oyun-alani { width: 100vw; height: 100vh; position: relative; background: #eee; border-bottom: 5px solid #ccc; }
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: 'Arial', sans-serif; }
         
+        /* Yol Tasarımı */
+        #yol { 
+            position: absolute; bottom: 0; width: 100%; height: 150px; 
+            background: #555; border-top: 10px solid #444; 
+        }
+
+        /* Milis Karakteri */
         #milis { 
-            position: absolute; bottom: 50px; left: 50px; 
-            font-size: 50px; transition: transform 0.2s; 
-            z-index: 10;
+            position: absolute; bottom: 60px; left: 50px; 
+            font-size: 60px; transition: transform 0.1s linear; 
+            z-index: 100;
         }
 
+        /* Bored (Yiyecekler) */
         .bored { 
-            position: absolute; font-size: 30px; 
-            bottom: 60px; color: brown;
+            position: absolute; font-size: 40px; 
+            bottom: 70px; z-index: 50;
         }
 
+        /* Arayüz */
         #skor { 
             position: fixed; top: 20px; left: 20px; 
-            font-size: 24px; font-weight: bold; 
+            background: rgba(255,255,255,0.8); padding: 10px;
+            border-radius: 10px; font-size: 24px; font-weight: bold; 
         }
 
         #mesaj { 
-            position: fixed; top: 50%; left: 50%; 
+            position: fixed; top: 40%; left: 50%; 
             transform: translate(-50%, -50%);
-            font-size: 40px; font-weight: bold; color: #d32f2f;
-            display: none; text-align: center;
+            background: white; padding: 20px; border-radius: 20px;
+            font-size: 35px; font-weight: bold; color: #d32f2f;
+            display: none; text-align: center; border: 5px solid #d32f2f;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -35,69 +46,73 @@
 
     <div id="skor">Toplanan Bored: 0 / 20</div>
     <div id="mesaj">Aferin milisi iyice doyurdun şişti!</div>
+    <div id="yol"></div>
 
-    <div id="oyun-alani">
-        <div id="milis">🐱</div>
-    </div>
+    <div id="milis">🐱</div>
 
     <script>
         const milis = document.getElementById('milis');
         const skorYazisi = document.getElementById('skor');
         const mesaj = document.getElementById('mesaj');
-        const oyunAlani = document.getElementById('oyun-alani');
 
         let toplanan = 0;
         let milisX = 50;
-        let bitti mi = false;
+        let bittiMi = false;
 
-        // Hareket kontrolü (Sağ-Sol ok tuşları)
+        // Hareket: Sağ ve Sol ok tuşları
         window.addEventListener('keydown', (e) => {
-            if(bittimi) return;
-            if (e.key === "ArrowRight") milisX += 20;
-            if (e.key === "ArrowLeft") milisX -= 20;
+            if(bittiMi) return;
+            if (e.key === "ArrowRight") milisX += 30;
+            if (e.key === "ArrowLeft") milisX -= 30;
+            
+            // Ekran sınırlarını koru
+            if(milisX < 0) milisX = 0;
+            if(milisX > window.innerWidth - 60) milisX = window.innerWidth - 60;
+            
             milis.style.left = milisX + "px";
             kontrolEt();
         });
 
-        // Rastgele Bored oluşturma
+        // Rastgele Bored (Yiyecek) oluşturma
         function boredOlustur() {
-            if(bittimi) return;
+            if(bittiMi) return;
             const bored = document.createElement('div');
             bored.className = 'bored';
-            bored.innerText = '🍔'; // Bored yiyeceği
-            bored.style.left = (Math.random() * (window.innerWidth - 50)) + "px";
-            oyunAlani.appendChild(bored);
+            bored.innerText = '🍔';
+            bored.style.left = (Math.random() * (window.innerWidth - 60)) + "px";
+            document.body.appendChild(bored);
             
-            // 5 saniye sonra toplanmazsa silinsin
-            setTimeout(() => { if(bored.parentNode) bored.remove(); }, 5000);
+            // 4 saniye sonra toplanmazsa silinsin
+            setTimeout(() => { if(bored.parentNode) bored.remove(); }, 4000);
         }
 
-        // Çarpışma kontrolü
+        // Dokunma/Çarpışma kontrolü
         function kontrolEt() {
             const boredlar = document.querySelectorAll('.bored');
             boredlar.forEach(b => {
                 const bRect = b.getBoundingClientRect();
                 const mRect = milis.getBoundingClientRect();
 
-                if (!(rRect.right < mRect.left || bRect.left > mRect.right)) {
+                // Basit çarpışma testi
+                if (!(bRect.right < mRect.left || bRect.left > mRect.right)) {
                     b.remove();
                     toplanan++;
                     skorYazisi.innerText = `Toplanan Bored: ${toplanan} / 20`;
                     
-                    // Milis her yediğinde biraz şişsin
-                    let olcek = 1 + (toplanan * 0.1);
+                    // Milis büyüsün (şişsin)
+                    let olcek = 1 + (toplanan * 0.15);
                     milis.style.transform = `scale(${olcek})`;
 
                     if (toplanan >= 20) {
-                        bittimi = true;
+                        bittiMi = true;
                         mesaj.style.display = "block";
                     }
                 }
             });
         }
 
-        // Sürekli bored gelsin
-        setInterval(boredOlustur, 1500);
+        // Her 1.2 saniyede bir yeni yiyecek gelsin
+        setInterval(boredOlustur, 1200);
     </script>
 </body>
 </html>
