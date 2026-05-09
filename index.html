@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Milis'i Doyur</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #f7f7f7; font-family: sans-serif; }
+        #oyun-alani { width: 100vw; height: 100vh; position: relative; background: #eee; border-bottom: 5px solid #ccc; }
+        
+        #milis { 
+            position: absolute; bottom: 50px; left: 50px; 
+            font-size: 50px; transition: transform 0.2s; 
+            z-index: 10;
+        }
+
+        .bored { 
+            position: absolute; font-size: 30px; 
+            bottom: 60px; color: brown;
+        }
+
+        #skor { 
+            position: fixed; top: 20px; left: 20px; 
+            font-size: 24px; font-weight: bold; 
+        }
+
+        #mesaj { 
+            position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%);
+            font-size: 40px; font-weight: bold; color: #d32f2f;
+            display: none; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="skor">Toplanan Bored: 0 / 20</div>
+    <div id="mesaj">Aferin milisi iyice doyurdun şişti!</div>
+
+    <div id="oyun-alani">
+        <div id="milis">🐱</div>
+    </div>
+
+    <script>
+        const milis = document.getElementById('milis');
+        const skorYazisi = document.getElementById('skor');
+        const mesaj = document.getElementById('mesaj');
+        const oyunAlani = document.getElementById('oyun-alani');
+
+        let toplanan = 0;
+        let milisX = 50;
+        let bitti mi = false;
+
+        // Hareket kontrolü (Sağ-Sol ok tuşları)
+        window.addEventListener('keydown', (e) => {
+            if(bittimi) return;
+            if (e.key === "ArrowRight") milisX += 20;
+            if (e.key === "ArrowLeft") milisX -= 20;
+            milis.style.left = milisX + "px";
+            kontrolEt();
+        });
+
+        // Rastgele Bored oluşturma
+        function boredOlustur() {
+            if(bittimi) return;
+            const bored = document.createElement('div');
+            bored.className = 'bored';
+            bored.innerText = '🍔'; // Bored yiyeceği
+            bored.style.left = (Math.random() * (window.innerWidth - 50)) + "px";
+            oyunAlani.appendChild(bored);
+            
+            // 5 saniye sonra toplanmazsa silinsin
+            setTimeout(() => { if(bored.parentNode) bored.remove(); }, 5000);
+        }
+
+        // Çarpışma kontrolü
+        function kontrolEt() {
+            const boredlar = document.querySelectorAll('.bored');
+            boredlar.forEach(b => {
+                const bRect = b.getBoundingClientRect();
+                const mRect = milis.getBoundingClientRect();
+
+                if (!(rRect.right < mRect.left || bRect.left > mRect.right)) {
+                    b.remove();
+                    toplanan++;
+                    skorYazisi.innerText = `Toplanan Bored: ${toplanan} / 20`;
+                    
+                    // Milis her yediğinde biraz şişsin
+                    let olcek = 1 + (toplanan * 0.1);
+                    milis.style.transform = `scale(${olcek})`;
+
+                    if (toplanan >= 20) {
+                        bittimi = true;
+                        mesaj.style.display = "block";
+                    }
+                }
+            });
+        }
+
+        // Sürekli bored gelsin
+        setInterval(boredOlustur, 1500);
+    </script>
+</body>
+</html>
